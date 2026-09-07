@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrimeFit Coaching — Free Fitness Consultation</title>
+  <meta name="description" content="Book your FREE 30-minute fitness consultation with PrimeFit Coaching. Get a personalized plan built around your goals, schedule, and lifestyle." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVIGATION
+  ============================================================ -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-container">
+      <!-- Logo -->
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon"><i class="fas fa-bolt"></i></span>
+        Prime<span class="logo-accent">Fit</span>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+        <li><a href="#benefits" class="nav-link">Benefits</a></li>
+        <li><a href="#testimonials" class="nav-link">Results</a></li>
+        <li><a href="#lead-capture" class="nav-link nav-cta-link">Book Free Call</a></li>
+      </ul>
+
+      <!-- Hamburger -->
+      <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+
+  <!-- ============================================================
+       HERO SECTION
+  ============================================================ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg-overlay"></div>
+    <div class="container hero-container">
+
+      <!-- Left: Copy -->
+      <div class="hero-content animate-hero-text">
+        <div class="hero-badge">
+          <i class="fas fa-star"></i>
+          <span>100% Free — No Strings Attached</span>
+        </div>
+
+        <h1 class="hero-headline">
+          Start Your Fitness Journey<br />
+          <span class="text-accent">With a Plan That<br />Actually Works</span>
+        </h1>
+
+        <p class="hero-subheadline">
+          Get a <strong>FREE 30-minute fitness consultation</strong> and discover a simple plan built around your goals, schedule, and lifestyle.
+        </p>
+
+        <div class="hero-cta-group">
+          <a href="#lead-capture" class="btn btn-primary btn-large">
+            <i class="fas fa-calendar-check"></i>
+            BOOK MY FREE CONSULTATION
+          </a>
+          <p class="hero-cta-note">
+            <i class="fas fa-shield-halved"></i>
+            No pressure. No complicated plans. Just a clear starting point.
+          </p>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="hero-trust">
+          <div class="trust-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Personalized Plan</span>
+          </div>
+          <div class="trust-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Expert Coach</span>
+          </div>
+          <div class="trust-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Completely Free</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Image -->
+      <div class="hero-image-wrap animate-hero-image">
+        <div class="hero-image-card">
+          <img
+            src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80&auto=format&fit=crop"
+            alt="Fitness coach helping client with workout"
+            class="hero-img"
+            onerror="this.src='https://placehold.co/600x700/0d1b2a/39d353?text=PrimeFit+Coaching'"
+          />
+          <!-- Floating stat card -->
+          <div class="hero-stat-card hero-stat-top">
+            <i class="fas fa-users text-accent"></i>
+            <div>
+              <strong>500+</strong>
+              <span>Consultations Done</span>
+            </div>
+          </div>
+          <div class="hero-stat-card hero-stat-bottom">
+            <i class="fas fa-trophy text-accent"></i>
+            <div>
+              <strong>94%</strong>
+              <span>Client Satisfaction</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       SOCIAL PROOF BAR
+  ============================================================ -->
+  <div class="social-proof-bar">
+    <div class="container proof-bar-inner">
+      <span class="proof-label">Trusted by people who've been where you are:</span>
+      <div class="proof-avatars">
+        <img src="https://i.pravatar.cc/40?img=1" alt="Client" />
+        <img src="https://i.pravatar.cc/40?img=5" alt="Client" />
+        <img src="https://i.pravatar.cc/40?img=9" alt="Client" />
+        <img src="https://i.pravatar.cc/40?img=12" alt="Client" />
+        <img src="https://i.pravatar.cc/40?img=20" alt="Client" />
+      </div>
+      <div class="proof-stars">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        <i class="fas fa-star"></i><i class="fas fa-star"></i>
+        <span>4.9 / 5 from 200+ consultations</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PROBLEM SECTION
+  ============================================================ -->
+  <section class="section problem-section" id="problem">
+    <div class="container">
+      <div class="section-header fade-in">
+        <p class="section-eyebrow">Sound Familiar?</p>
+        <h2 class="section-title">Struggling to Know<br /><span class="text-accent">Where to Start?</span></h2>
+        <p class="section-subtitle">
+          You want to get fit and feel better — but it's overwhelming. You've tried before and hit the same walls. You're not alone, and it's not your fault.
+        </p>
+      </div>
+
+      <div class="problem-grid">
+
+        <div class="problem-card fade-in">
+          <div class="problem-icon">
+            <i class="fas fa-dumbbell"></i>
+          </div>
+          <h3>You don't know what workouts to do</h3>
+          <p>The gym feels intimidating and online advice is contradictory. Where do you even begin?</p>
+        </div>
+
+        <div class="problem-card fade-in">
+          <div class="problem-icon">
+            <i class="fas fa-calendar-xmark"></i>
+          </div>
+          <h3>You struggle to stay consistent</h3>
+          <p>You start strong but life gets in the way. Without a real system, motivation fades fast.</p>
+        </div>
+
+        <div class="problem-card fade-in">
+          <div class="problem-icon">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <h3>You don't know what to eat</h3>
+          <p>Fad diets are confusing and unsustainable. You need clarity — not another meal plan that doesn't fit your life.</p>
+        </div>
+
+        <div class="problem-card fade-in">
+          <div class="problem-icon">
+            <i class="fas fa-rotate-left"></i>
+          </div>
+          <h3>You've tried programs without results</h3>
+          <p>Generic programs don't account for your unique body, goals, and schedule. You need something personal.</p>
+        </div>
+
+      </div>
+
+      <div class="problem-solution fade-in">
+        <div class="solution-inner">
+          <i class="fas fa-circle-check solution-icon"></i>
+          <div>
+            <h3>PrimeFit simplifies the entire process.</h3>
+            <p>We don't give you a one-size-fits-all program. We have a real conversation, understand your situation, and create a starting point that actually fits your life.</p>
+          </div>
+          <a href="#lead-capture" class="btn btn-primary">Start Here — It's Free</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       BENEFITS SECTION
+  ============================================================ -->
+  <section class="section benefits-section" id="benefits">
+    <div class="container">
+      <div class="section-header fade-in">
+        <p class="section-eyebrow">Your Free Consultation</p>
+        <h2 class="section-title">What You'll Get From<br /><span class="text-accent">Your Free Consultation</span></h2>
+        <p class="section-subtitle">In 30 minutes, you'll walk away with more clarity than most people get from months of trying on their own.</p>
+      </div>
+
+      <div class="benefits-grid">
+
+        <div class="benefit-card fade-in">
+          <div class="benefit-number">01</div>
+          <div class="benefit-icon-wrap">
+            <i class="fas fa-bullseye"></i>
+          </div>
+          <h3>Personalized Goals</h3>
+          <p>We dig into what you actually want to achieve — not a generic goal, but your goal. Weight loss, energy, strength, or just feeling good in your own skin.</p>
+          <div class="benefit-tag"><i class="fas fa-check"></i> Clarity on your direction</div>
+        </div>
+
+        <div class="benefit-card fade-in">
+          <div class="benefit-number">02</div>
+          <div class="benefit-icon-wrap">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h3>Simple Fitness Plan</h3>
+          <p>Get a realistic, beginner-friendly starting point built around your schedule. No overwhelming routines — just clear, actionable steps you can start this week.</p>
+          <div class="benefit-tag"><i class="fas fa-check"></i> Actionable from day one</div>
+        </div>
+
+        <div class="benefit-card fade-in">
+          <div class="benefit-number">03</div>
+          <div class="benefit-icon-wrap">
+            <i class="fas fa-lightbulb"></i>
+          </div>
+          <h3>Expert Guidance</h3>
+          <p>Learn what to focus on first so you don't waste time. Our coaches have helped hundreds of people at your exact starting point.</p>
+          <div class="benefit-tag"><i class="fas fa-check"></i> Skip costly mistakes</div>
+        </div>
+
+        <div class="benefit-card fade-in">
+          <div class="benefit-number">04</div>
+          <div class="benefit-icon-wrap">
+            <i class="fas fa-route"></i>
+          </div>
+          <h3>Clear Next Steps</h3>
+          <p>Leave the consultation knowing exactly what to do next. No guessing, no confusion — just a concrete path forward that you're confident in.</p>
+          <div class="benefit-tag"><i class="fas fa-check"></i> Leave with a real plan</div>
+        </div>
+
+      </div>
+
+      <!-- CTA inside benefits -->
+      <div class="benefits-cta fade-in">
+        <a href="#lead-capture" class="btn btn-primary btn-large">
+          <i class="fas fa-arrow-right"></i>
+          CLAIM YOUR FREE CONSULTATION
+        </a>
+        <p class="cta-subtext">Limited spots available each week.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       HOW IT WORKS
+  ============================================================ -->
+  <section class="section how-section" id="how-it-works">
+    <div class="container">
+      <div class="section-header fade-in">
+        <p class="section-eyebrow">Simple Process</p>
+        <h2 class="section-title">3 Steps to Your<br /><span class="text-accent">Personalized Plan</span></h2>
+        <p class="section-subtitle">We've made it as easy as possible to get started. No commitment, no cost.</p>
+      </div>
+
+      <div class="steps-container">
+
+        <div class="step-card fade-in">
+          <div class="step-number-wrap">
+            <span class="step-number">01</span>
+          </div>
+          <div class="step-icon"><i class="fas fa-user-pen"></i></div>
+          <h3>Tell Us About Yourself</h3>
+          <p>Complete a short form about your fitness goals, experience level, and what you're struggling with. Takes less than 2 minutes.</p>
+          <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="step-card fade-in">
+          <div class="step-number-wrap">
+            <span class="step-number">02</span>
+          </div>
+          <div class="step-icon"><i class="fas fa-calendar-days"></i></div>
+          <h3>Book Your Consultation</h3>
+          <p>Choose a time that works for you. Consultations are 30 minutes via video or phone — completely free, no strings attached.</p>
+          <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="step-card fade-in">
+          <div class="step-number-wrap">
+            <span class="step-number">03</span>
+          </div>
+          <div class="step-icon"><i class="fas fa-medal"></i></div>
+          <h3>Get Your Action Plan</h3>
+          <p>Talk with a coach and walk away with a personalized action plan, clear recommendations, and confidence to start moving forward.</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       TESTIMONIALS
+  ============================================================ -->
+  <section class="section testimonials-section" id="testimonials">
+    <div class="container">
+      <div class="section-header fade-in">
+        <p class="section-eyebrow">Real Stories</p>
+        <h2 class="section-title">People Just Like You<br /><span class="text-accent">Found Their Starting Point</span></h2>
+        <p class="section-subtitle">
+          <em>Note: These are fictional testimonials created for demonstration purposes.</em>
+        </p>
+      </div>
+
+      <div class="testimonials-grid">
+
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <blockquote>
+            "I finally stopped guessing what I should be doing. The consultation gave me a simple plan I could actually follow. Three months later, I'm down 18 pounds and actually enjoying exercise for the first time."
+          </blockquote>
+          <div class="testimonial-author">
+            <img src="https://i.pravatar.cc/56?img=47" alt="Maria" />
+            <div>
+              <strong>Maria S.</strong>
+              <span>Age 28 · Lost 18 lbs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card fade-in testimonial-featured">
+          <div class="testimonial-badge">Most Helpful</div>
+          <div class="testimonial-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <blockquote>
+            "I had tried three different programs before and quit each one. What made PrimeFit different was the consultation — someone actually listened to my schedule and limitations. The plan they gave me was realistic and it worked."
+          </blockquote>
+          <div class="testimonial-author">
+            <img src="https://i.pravatar.cc/56?img=33" alt="James" />
+            <div>
+              <strong>James T.</strong>
+              <span>Age 35 · Gained Consistency</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <blockquote>
+            "I was nervous to start because I'm a complete beginner. But the coach was patient and non-judgmental. I left the call with a written plan and actually did my first workout that same evening."
+          </blockquote>
+          <div class="testimonial-author">
+            <img src="https://i.pravatar.cc/56?img=25" alt="Priya" />
+            <div>
+              <strong>Priya K.</strong>
+              <span>Age 31 · Complete Beginner</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       LEAD CAPTURE / FORM SECTION
+  ============================================================ -->
+  <section class="section lead-capture-section" id="lead-capture">
+    <div class="container">
+
+      <div class="lead-capture-inner fade-in">
+
+        <!-- Left: Copy -->
+        <div class="lead-copy">
+          <p class="section-eyebrow light">Free Consultation</p>
+          <h2 class="lead-headline">Ready to Take<br />the First Step?</h2>
+          <p class="lead-subheadline">
+            Tell us a little about yourself and we'll help you determine the best next step toward your fitness goals.
+          </p>
+
+          <ul class="lead-benefits-list">
+            <li><i class="fas fa-check-circle"></i> 100% Free — No Credit Card Required</li>
+            <li><i class="fas fa-check-circle"></i> 30-Minute Focused Consultation</li>
+            <li><i class="fas fa-check-circle"></i> Personalized to Your Specific Goals</li>
+            <li><i class="fas fa-check-circle"></i> No Obligation to Purchase Anything</li>
+          </ul>
+
+          <!-- Privacy note -->
+          <div class="lead-privacy">
+            <i class="fas fa-lock"></i>
+            <span>Your information is safe. We never share or sell your data.</span>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div class="lead-form-wrap">
+          <form id="leadForm" class="lead-form" novalidate>
+            <h3 class="form-title">Get My Free Consultation</h3>
+
+            <!-- Full Name -->
+            <div class="form-group">
+              <label for="fullName">
+                <i class="fas fa-user"></i> Full Name
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                placeholder="e.g. Alex Johnson"
+                autocomplete="name"
+              />
+              <span class="form-error" id="fullNameError"></span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label for="email">
+                <i class="fas fa-envelope"></i> Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="e.g. alex@email.com"
+                autocomplete="email"
+              />
+              <span class="form-error" id="emailError"></span>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+              <label for="phone">
+                <i class="fas fa-phone"></i> Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="e.g. +1 (555) 000-0000"
+                autocomplete="tel"
+              />
+              <span class="form-error" id="phoneError"></span>
+            </div>
+
+            <!-- Fitness Goal -->
+            <div class="form-group">
+              <label for="fitnessGoal">
+                <i class="fas fa-bullseye"></i> What's Your Main Fitness Goal?
+              </label>
+              <select id="fitnessGoal" name="fitnessGoal">
+                <option value="">— Select your goal —</option>
+                <option value="lose-weight">Lose Weight</option>
+                <option value="build-muscle">Build Muscle</option>
+                <option value="improve-fitness">Improve Fitness</option>
+                <option value="get-healthier">Get Healthier</option>
+                <option value="other">Other</option>
+              </select>
+              <span class="form-error" id="fitnessGoalError"></span>
+            </div>
+
+            <!-- Experience Level -->
+            <div class="form-group">
+              <label>
+                <i class="fas fa-chart-line"></i> Experience Level
+              </label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="experience" value="beginner" />
+                  <span class="radio-btn">Beginner</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="experience" value="intermediate" />
+                  <span class="radio-btn">Intermediate</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="experience" value="advanced" />
+                  <span class="radio-btn">Advanced</span>
+                </label>
+              </div>
+              <span class="form-error" id="experienceError"></span>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-primary btn-full btn-large" id="submitBtn">
+              <i class="fas fa-bolt"></i>
+              GET MY FREE CONSULTATION
+            </button>
+
+            <p class="form-footer-note">
+              <i class="fas fa-shield-halved"></i>
+              We respect your privacy. No spam, ever.
+            </p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       PORTFOLIO / FUNNEL STRATEGY SECTION
+  ============================================================ -->
+  <section class="section funnel-strategy-section" id="funnel-strategy">
+    <div class="container">
+      <div class="strategy-inner fade-in">
+
+        <div class="strategy-header">
+          <div class="strategy-badge">
+            <i class="fas fa-diagram-project"></i>
+            Portfolio Project
+          </div>
+          <h2>Sales Funnel Strategy</h2>
+          <p>This website was built as a complete sales funnel — not just a landing page. Here's the customer journey:</p>
+        </div>
+
+        <!-- Funnel Flow -->
+        <div class="funnel-flow">
+          <div class="funnel-step">
+            <div class="funnel-step-icon"><i class="fas fa-bullhorn"></i></div>
+            <div class="funnel-step-label">Traffic</div>
+            <div class="funnel-step-sub">Social / Ads</div>
+          </div>
+          <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+
+          <div class="funnel-step">
+            <div class="funnel-step-icon"><i class="fas fa-desktop"></i></div>
+            <div class="funnel-step-label">Landing Page</div>
+            <div class="funnel-step-sub">Build Interest</div>
+          </div>
+          <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+
+          <div class="funnel-step active">
+            <div class="funnel-step-icon"><i class="fas fa-user-plus"></i></div>
+            <div class="funnel-step-label">Lead Capture</div>
+            <div class="funnel-step-sub">Qualify Leads</div>
+          </div>
+          <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+
+          <div class="funnel-step">
+            <div class="funnel-step-icon"><i class="fas fa-circle-check"></i></div>
+            <div class="funnel-step-label">Thank You</div>
+            <div class="funnel-step-sub">Build Trust</div>
+          </div>
+          <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+
+          <div class="funnel-step">
+            <div class="funnel-step-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="funnel-step-label">Booking</div>
+            <div class="funnel-step-sub">Confirm Call</div>
+          </div>
+          <div class="funnel-arrow"><i class="fas fa-chevron-right"></i></div>
+
+          <div class="funnel-step">
+            <div class="funnel-step-icon"><i class="fas fa-handshake"></i></div>
+            <div class="funnel-step-label">Consultation</div>
+            <div class="funnel-step-sub">Convert</div>
+          </div>
+        </div>
+
+        <!-- Strategy Details -->
+        <div class="strategy-details">
+          <div class="strategy-detail-card">
+            <i class="fas fa-crosshairs"></i>
+            <div>
+              <strong>Objective</strong>
+              <p>Generate qualified fitness consultation leads.</p>
+            </div>
+          </div>
+          <div class="strategy-detail-card">
+            <i class="fas fa-trophy"></i>
+            <div>
+              <strong>Primary Conversion</strong>
+              <p>Consultation booking.</p>
+            </div>
+          </div>
+          <div class="strategy-detail-card">
+            <i class="fas fa-route"></i>
+            <div>
+              <strong>Funnel Strategy</strong>
+              <p>Capture visitor interest, collect lead information, build trust, and move qualified prospects toward a consultation.</p>
+            </div>
+          </div>
+          <div class="strategy-detail-card">
+            <i class="fas fa-code"></i>
+            <div>
+              <strong>Tech Stack</strong>
+              <p>HTML5, CSS3, Vanilla JavaScript — no frameworks. Fully responsive, conversion-optimized.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo">
+        <span class="logo-icon"><i class="fas fa-bolt"></i></span>
+        Prime<span class="logo-accent">Fit</span> Coaching
+      </div>
+      <p class="footer-tagline">Transform your fitness. Start with one conversation.</p>
+      <div class="footer-links">
+        <a href="#hero">Home</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#benefits">Benefits</a>
+        <a href="#lead-capture">Book Free Call</a>
+      </div>
+      <p class="footer-legal">
+        &copy; 2024 PrimeFit Coaching. This is a <strong>demo portfolio project</strong> — not a real business.
+        Built to demonstrate sales funnel development skills.
+      </p>
+    </div>
+  </footer>
+
+
+  <!-- ============================================================
+       STICKY MOBILE CTA
+  ============================================================ -->
+  <div class="mobile-sticky-cta" id="mobileCta">
+    <a href="#lead-capture" class="btn btn-primary btn-full">
+      <i class="fas fa-calendar-check"></i>
+      BOOK FREE CONSULTATION
+    </a>
+  </div>
+
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

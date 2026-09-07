@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrimeFit Coaching — You're Booked!</title>
+  <meta name="description" content="Your consultation request has been received. Book your free 30-minute fitness consultation now." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="thankyou-page">
+
+  <!-- ============================================================
+       NAVBAR (simplified)
+  ============================================================ -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon"><i class="fas fa-bolt"></i></span>
+        Prime<span class="logo-accent">Fit</span>
+      </a>
+      <a href="index.html" class="btn btn-outline btn-sm">
+        <i class="fas fa-arrow-left"></i> Back to Home
+      </a>
+    </div>
+  </nav>
+
+
+  <!-- ============================================================
+       THANK YOU HERO
+  ============================================================ -->
+  <section class="ty-hero">
+    <div class="container">
+      <div class="ty-hero-inner animate-hero-text">
+
+        <!-- Success Icon -->
+        <div class="ty-success-icon">
+          <i class="fas fa-circle-check"></i>
+        </div>
+
+        <h1 class="ty-headline">
+          You're One Step Closer to<br /><span class="text-accent">Your Fitness Goals!</span>
+        </h1>
+
+        <p class="ty-subheadline">
+          Thanks for sharing your information. Your consultation request has been received.
+        </p>
+
+        <!-- Progress Indicator -->
+        <div class="progress-steps">
+          <div class="progress-step completed">
+            <div class="progress-step-icon">
+              <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step-label">Information Submitted</div>
+          </div>
+
+          <div class="progress-connector completed"></div>
+
+          <div class="progress-step completed">
+            <div class="progress-step-icon">
+              <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step-label">Request Received</div>
+          </div>
+
+          <div class="progress-connector"></div>
+
+          <div class="progress-step active">
+            <div class="progress-step-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="progress-step-label">Book Consultation</div>
+          </div>
+        </div>
+
+        <!-- Personalized greeting if data in localStorage -->
+        <div class="ty-greeting" id="tyGreeting" style="display:none;">
+          <p>Hey <strong id="userName"></strong> 👋 — we're looking forward to helping you <span id="userGoal"></span>.</p>
+        </div>
+
+        <!-- Next step CTA -->
+        <div class="ty-cta-block">
+          <p class="ty-cta-label">
+            <i class="fas fa-arrow-down"></i>
+            One step left — pick your consultation time:
+          </p>
+          <a href="#booking" class="btn btn-primary btn-large scroll-btn">
+            <i class="fas fa-calendar-plus"></i>
+            BOOK MY CONSULTATION
+          </a>
+          <p class="ty-cta-note">Free 30-minute video or phone call. Choose what's convenient.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       BOOKING SECTION
+  ============================================================ -->
+  <section class="section booking-section" id="booking">
+    <div class="container">
+
+      <div class="section-header fade-in">
+        <p class="section-eyebrow">Last Step</p>
+        <h2 class="section-title">Choose Your<br /><span class="text-accent">Consultation Time</span></h2>
+        <p class="section-subtitle">Pick a date and time that works for you. The consultation is 30 minutes and completely free.</p>
+      </div>
+
+      <div class="booking-wrapper fade-in">
+
+        <!-- Booking Form (demo UI) -->
+        <div class="booking-form-wrap" id="bookingFormWrap">
+          <form id="bookingForm" class="booking-form" novalidate>
+
+            <!-- Step 1: Date & Time -->
+            <div class="booking-step active" id="bookingStep1">
+              <h3 class="booking-step-title">
+                <span class="booking-step-num">1</span>
+                Select Date &amp; Time
+              </h3>
+
+              <!-- Date Picker -->
+              <div class="form-group">
+                <label for="bookingDate">
+                  <i class="fas fa-calendar"></i> Preferred Date
+                </label>
+                <input type="date" id="bookingDate" name="bookingDate" />
+                <span class="form-error" id="bookingDateError"></span>
+              </div>
+
+              <!-- Time Slots -->
+              <div class="form-group">
+                <label><i class="fas fa-clock"></i> Available Times</label>
+                <div class="time-slots" id="timeSlots">
+                  <button type="button" class="time-slot" data-time="9:00 AM">9:00 AM</button>
+                  <button type="button" class="time-slot" data-time="10:00 AM">10:00 AM</button>
+                  <button type="button" class="time-slot" data-time="1:00 PM">1:00 PM</button>
+                  <button type="button" class="time-slot" data-time="3:00 PM">3:00 PM</button>
+                  <button type="button" class="time-slot" data-time="5:00 PM">5:00 PM</button>
+                </div>
+                <input type="hidden" id="selectedTime" name="selectedTime" />
+                <span class="form-error" id="selectedTimeError"></span>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-full" id="nextStepBtn">
+                Continue <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+
+            <!-- Step 2: Confirm Details -->
+            <div class="booking-step" id="bookingStep2">
+              <h3 class="booking-step-title">
+                <span class="booking-step-num">2</span>
+                Confirm Your Details
+              </h3>
+
+              <!-- Name -->
+              <div class="form-group">
+                <label for="bookingName">
+                  <i class="fas fa-user"></i> Full Name
+                </label>
+                <input
+                  type="text"
+                  id="bookingName"
+                  name="bookingName"
+                  placeholder="Your full name"
+                  autocomplete="name"
+                />
+                <span class="form-error" id="bookingNameError"></span>
+              </div>
+
+              <!-- Email -->
+              <div class="form-group">
+                <label for="bookingEmail">
+                  <i class="fas fa-envelope"></i> Email Address
+                </label>
+                <input
+                  type="email"
+                  id="bookingEmail"
+                  name="bookingEmail"
+                  placeholder="your@email.com"
+                  autocomplete="email"
+                />
+                <span class="form-error" id="bookingEmailError"></span>
+              </div>
+
+              <!-- Booking Summary -->
+              <div class="booking-summary" id="bookingSummary">
+                <h4><i class="fas fa-list-check"></i> Booking Summary</h4>
+                <div class="summary-row">
+                  <span><i class="fas fa-calendar"></i> Date:</span>
+                  <strong id="summaryDate">—</strong>
+                </div>
+                <div class="summary-row">
+                  <span><i class="fas fa-clock"></i> Time:</span>
+                  <strong id="summaryTime">—</strong>
+                </div>
+                <div class="summary-row">
+                  <span><i class="fas fa-video"></i> Format:</span>
+                  <strong>Video / Phone — 30 min</strong>
+                </div>
+              </div>
+
+              <div class="booking-btn-row">
+                <button type="button" class="btn btn-outline" id="backStepBtn">
+                  <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="submit" class="btn btn-primary" id="confirmBookingBtn">
+                  <i class="fas fa-calendar-check"></i>
+                  CONFIRM BOOKING
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Sidebar Info -->
+        <div class="booking-sidebar fade-in">
+          <div class="booking-info-card">
+            <h4><i class="fas fa-circle-info"></i> What to Expect</h4>
+            <ul>
+              <li><i class="fas fa-check text-accent"></i> 30-minute call (video or phone)</li>
+              <li><i class="fas fa-check text-accent"></i> No preparation needed</li>
+              <li><i class="fas fa-check text-accent"></i> Personalized advice from a coach</li>
+              <li><i class="fas fa-check text-accent"></i> Zero pressure or sales tactics</li>
+              <li><i class="fas fa-check text-accent"></i> Walk away with a written plan</li>
+            </ul>
+          </div>
+
+          <div class="booking-info-card">
+            <h4><i class="fas fa-shield-halved"></i> Our Promise</h4>
+            <p>This is a genuine consultation — not a sales pitch. If we're not the right fit for you, we'll tell you and point you in the right direction.</p>
+          </div>
+
+          <div class="booking-coach-card">
+            <img
+              src="https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?w=200&q=80&auto=format&fit=crop&crop=face"
+              alt="PrimeFit Coach"
+              onerror="this.src='https://placehold.co/200x200/0d1b2a/39d353?text=Coach'"
+            />
+            <div>
+              <strong>Your Coach</strong>
+              <span>PrimeFit Certified Trainer</span>
+              <div class="coach-rating">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                <span>4.9 rating</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       BOOKING SUCCESS (hidden until confirmed)
+  ============================================================ -->
+  <div class="booking-success-overlay" id="bookingSuccess">
+    <div class="booking-success-card">
+      <div class="success-animation">
+        <div class="success-circle">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+      </div>
+      <h2>Your Consultation Has Been Booked!</h2>
+      <p class="success-sub">We'll see you soon.</p>
+
+      <div class="success-details" id="successDetails">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="success-next">
+        <p>We've sent a confirmation to <strong id="successEmail"></strong>.</p>
+        <p>Check your email for the video call link and instructions.</p>
+      </div>
+
+      <div class="success-actions">
+        <a href="index.html" class="btn btn-outline">
+          <i class="fas fa-home"></i> Back to Home
+        </a>
+        <button class="btn btn-primary" onclick="window.print()">
+          <i class="fas fa-print"></i> Print Confirmation
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo">
+        <span class="logo-icon"><i class="fas fa-bolt"></i></span>
+        Prime<span class="logo-accent">Fit</span> Coaching
+      </div>
+      <p class="footer-legal">
+        &copy; 2024 PrimeFit Coaching. This is a <strong>demo portfolio project</strong> — not a real business.
+      </p>
+    </div>
+  </footer>
+
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

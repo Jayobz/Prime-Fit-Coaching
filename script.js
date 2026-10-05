@@ -6,10 +6,11 @@
    01. Utility Helpers
    02. Navigation (scroll behavior + mobile menu)
    03. Scroll Animations (Intersection Observer)
-   04. Lead Capture Form (index.html)
-   05. Thank You Page (thank-you.html)
-   06. Booking Form (thank-you.html)
-   07. Init — Route to correct page handlers
+   04. Supabase Config & Client
+   05. Lead Capture Form (index.html) — Supabase integration
+   06. Thank You Page (thank-you.html)
+   07. Booking Form (thank-you.html)
+   08. Init — Route to correct page handlers
 ============================================================ */
 
 'use strict';
@@ -237,39 +238,111 @@ function initScrollAnimations() {
 
 
 /* ============================================================
-   04. LEAD CAPTURE FORM (index.html)
+   04. SUPABASE CONFIG
+   ──────────────────────────────────────────────────────────
+   Replace the two placeholder strings below with your real
+   values from: Supabase Dashboard → Project Settings → API
+
+   SUPABASE_URL  → "Project URL"
+   SUPABASE_ANON_KEY → "anon / public" key
+
+   NEVER use the service_role key here — anon key only.
+============================================================ */
+
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+// Initialise the Supabase client using the CDN global (loaded before this file)
+// window.supabase is provided by @supabase/supabase-js v2 via CDN
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+/* ============================================================
+   05. LEAD CAPTURE FORM (index.html)
+   ──────────────────────────────────────────────────────────
+   Supabase table expected: "leads"
+   Columns:
+     id                – auto-generated (uuid or serial, set by Supabase)
+     full_name         – text
+     email             – text
+     phone             – text
+     fitness_goal      – text
+     consultation_date – date  (YYYY-MM-DD)
+     consultation_time – text
+     created_at        – timestamptz (set by Supabase default: now())
 ============================================================ */
 
 function initLeadForm() {
   const form = $('#leadForm');
   if (!form) return;
 
-  // Field references
+  // ── Field references ──────────────────────────────────────
   const fields = {
-    fullName:    { input: $('#fullName'),    error: $('#fullNameError') },
-    email:       { input: $('#email'),       error: $('#emailError') },
-    phone:       { input: $('#phone'),       error: $('#phoneError') },
-    fitnessGoal: { input: $('#fitnessGoal'), error: $('#fitnessGoalError') },
-    experience:  { input: null,              error: $('#experienceError') },
+    fullName:         { input: $('#fullName'),         error: $('#fullNameError') },
+    email:            { input: $('#email'),             error: $('#emailError') },
+    phone:            { input: $('#phone'),             error: $('#phoneError') },
+    fitnessGoal:      { input: $('#fitnessGoal'),       error: $('#fitnessGoalError') },
+    experience:       { input: null,                    error: $('#experienceError') },
+    consultationDate: { input: $('#consultationDate'),  error: $('#consultationDateError') },
+    consultationTime: { input: $('#consultationTime'),  error: $('#consultationTimeError') },
   };
 
-  const submitBtn = $('#submitBtn');
+  const submitBtn    = $('#submitBtn');
+  const feedbackEl   = $('#formFeedback');
 
-  // --- Real-time validation: clear errors on input ---
-  Object.entries(fields).forEach(([key, { input, error }]) => {
+  // Store original button label so we can restore it on error
+  const originalBtnHTML = submitBtn.innerHTML;
+
+  // ── Helpers: feedback banner ──────────────────────────────
+
+  /**
+   * Show an inline success or error message above the submit button.
+   * @param {'success'|'error'} type
+   * @param {string} message
+   */
+  function showFeedback(type, message) {
+    if (!feedbackEl) return;
+    feedbackEl.className = `form-feedback form-feedback--${type}`;
+    feedbackEl.innerHTML = type === 'success'
+      ? `<i class="fas fa-circle-check"></i> ${message}`
+      : `<i class="fas fa-triangle-exclamation"></i> ${message}`;
+    feedbackEl.style.display = 'flex';
+
+    // Scroll feedback into view
+    const navbar = $('#navbar');
+    const offset = (navbar ? navbar.offsetHeight : 80) + 12;
+    const top = feedbackEl.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  function hideFeedback() {
+    if (!feedbackEl) return;
+    feedbackEl.style.display = 'none';
+    feedbackEl.textContent = '';
+    feedbackEl.className = 'form-feedback';
+  }
+
+  // ── Set min date to today on the date picker ──────────────
+  if (fields.consultationDate.input) {
+    fields.consultationDate.input.min = todayString();
+  }
+
+  // ── Real-time validation: clear errors on input ───────────
+  Object.values(fields).forEach(({ input, error }) => {
     if (!input) return;
-    input.addEventListener('input', () => clearError(input, error));
-    input.addEventListener('change', () => clearError(input, error));
+    input.addEventListener('input',  () => { clearError(input, error); hideFeedback(); });
+    input.addEventListener('change', () => { clearError(input, error); hideFeedback(); });
   });
 
-  // Radio group real-time clear
+  // Radio group — clear error on any selection
   $$('input[name="experience"]').forEach(radio => {
     radio.addEventListener('change', () => {
       clearError(null, fields.experience.error);
+      hideFeedback();
     });
   });
 
-  // --- Validate all fields ---
+  // ── Full form validation ──────────────────────────────────
   function validateForm() {
     let valid = true;
 
@@ -327,15 +400,34 @@ function initLeadForm() {
       clearError(null, fields.experience.error);
     }
 
+    // Consultation Date
+    const cDate = fields.consultationDate.input.value;
+    if (!cDate) {
+      showError(fields.consultationDate.input, fields.consultationDate.error, 'Please select a preferred consultation date.');
+      valid = false;
+    } else {
+      clearError(fields.consultationDate.input, fields.consultationDate.error);
+    }
+
+    // Consultation Time
+    const cTime = fields.consultationTime.input.value;
+    if (!cTime) {
+      showError(fields.consultationTime.input, fields.consultationTime.error, 'Please select a preferred consultation time.');
+      valid = false;
+    } else {
+      clearError(fields.consultationTime.input, fields.consultationTime.error);
+    }
+
     return valid;
   }
 
-  // --- Form submit handler ---
-  form.addEventListener('submit', (e) => {
+  // ── Form submit handler ───────────────────────────────────
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    hideFeedback();
 
+    // 1. Validate — stop here if anything is missing/invalid
     if (!validateForm()) {
-      // Scroll to first error field
       const firstError = form.querySelector('.invalid, .form-error:not(:empty)');
       if (firstError) {
         const navbar = $('#navbar');
@@ -346,38 +438,80 @@ function initLeadForm() {
       return;
     }
 
-    // --- Collect form data ---
+    // 2. Collect form data — mapped to Supabase column names
     const leadData = {
-      fullName:   fields.fullName.input.value.trim(),
-      email:      fields.email.input.value.trim(),
-      phone:      fields.phone.input.value.trim(),
-      fitnessGoal:fields.fitnessGoal.input.value,
-      experience: $('input[name="experience"]:checked').value,
-      submittedAt:new Date().toISOString(),
+      full_name:         fields.fullName.input.value.trim(),
+      email:             fields.email.input.value.trim(),
+      phone:             fields.phone.input.value.trim(),
+      fitness_goal:      fields.fitnessGoal.input.value,
+      // experience is not a column in the leads table —
+      // store it in localStorage for the thank-you page personalisation
+      consultation_date: fields.consultationDate.input.value,       // YYYY-MM-DD
+      consultation_time: fields.consultationTime.input.value,
+      // created_at is set automatically by Supabase (default: now())
     };
 
-    // --- Save to localStorage (demo — no data sent anywhere) ---
-    try {
-      localStorage.setItem('primefit_lead', JSON.stringify(leadData));
-    } catch (err) {
-      // localStorage might be unavailable in some private browsing contexts
-      console.warn('localStorage unavailable:', err);
-    }
-
-    // --- Button loading state ---
+    // 3. Loading state — disable button to prevent duplicate submissions
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
-    // Simulate a brief processing delay (UX feel), then redirect
-    setTimeout(() => {
-      window.location.href = 'thank-you.html';
-    }, 900);
+    try {
+      // ── 4. Insert into Supabase ────────────────────────────
+      // The anon key + RLS INSERT policy allows this.
+      // SELECT is blocked by RLS so visitors cannot read other leads.
+      const { error: supabaseError } = await supabaseClient
+        .from('leads')
+        .insert([leadData]);
+
+      if (supabaseError) {
+        // Supabase returned an error (e.g. constraint violation, RLS denied)
+        throw supabaseError;
+      }
+
+      // ── 5. Success ─────────────────────────────────────────
+      // Also save to localStorage so thank-you.html can personalise the greeting
+      try {
+        localStorage.setItem('primefit_lead', JSON.stringify({
+          fullName:         leadData.full_name,
+          email:            leadData.email,
+          phone:            leadData.phone,
+          fitnessGoal:      leadData.fitness_goal,
+          experience:       ($('input[name="experience"]:checked') || {}).value || '',
+          consultationDate: leadData.consultation_date,
+          consultationTime: leadData.consultation_time,
+          submittedAt:      new Date().toISOString(),
+        }));
+      } catch (storageErr) {
+        // localStorage unavailable in some private-browsing contexts — not fatal
+        console.warn('localStorage unavailable:', storageErr);
+      }
+
+      // Show brief success message, then redirect to thank-you page
+      showFeedback('success', "You're In! Your free consultation request has been received.");
+
+      // Short pause so the user sees the confirmation, then move on
+      setTimeout(() => {
+        window.location.href = 'thank-you.html';
+      }, 1400);
+
+    } catch (error) {
+      // ── 6. Error handling ──────────────────────────────────
+      // Log the full technical error for debugging in DevTools
+      console.error('Lead submission error:', error);
+
+      // Restore the button so the user can try again
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHTML;
+
+      // Show a friendly, visible error message — do NOT clear the form
+      showFeedback('error', 'Something went wrong. Please check your information and try again.');
+    }
   });
 }
 
 
 /* ============================================================
-   05. THANK YOU PAGE — Load & Display Lead Data
+   06. THANK YOU PAGE — Load & Display Lead Data
 ============================================================ */
 
 function initThankYouPage() {
@@ -445,7 +579,7 @@ function initThankYouPage() {
 
 
 /* ============================================================
-   06. BOOKING FORM (thank-you.html)
+   07. BOOKING FORM (thank-you.html)
 ============================================================ */
 
 function initBookingForm() {
@@ -692,7 +826,7 @@ function initBookingForm() {
 
 
 /* ============================================================
-   07. INIT — Route to correct page handlers
+   08. INIT — Route to correct page handlers
 ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {

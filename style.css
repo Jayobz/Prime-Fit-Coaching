@@ -2353,3 +2353,119 @@ p { line-height: 1.7; }
 
   .section-header { margin-bottom: 40px; }
 }
+
+
+/* ============================================================
+   NEW — SUPABASE INTEGRATION STYLES
+   Styles for:
+   - Consultation Date input (date picker)
+   - Consultation Time select (reuses existing .form-group select)
+   - .form-feedback banner (success / error)
+   Added alongside existing form styles — nothing overridden.
+============================================================ */
+
+/* ── Date input: match the existing dark input aesthetic ── */
+.form-group input[type="date"] {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast),
+              box-shadow var(--transition-fast);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  /* Tint the native calendar icon to match the dark theme */
+  color-scheme: dark;
+}
+
+.form-group input[type="date"]:focus {
+  border-color: var(--color-accent);
+  background: rgba(57, 211, 83, 0.04);
+  box-shadow: 0 0 0 3px rgba(57, 211, 83, 0.12);
+}
+
+.form-group input[type="date"].invalid {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.12);
+}
+
+/* Placeholder text colour for empty date input (WebKit) */
+.form-group input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: var(--color-text-secondary);
+}
+
+/* Make the calendar picker icon visible on dark bg */
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0) saturate(100%) invert(72%) sepia(10%)
+          saturate(400%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* ── Feedback banner (success / error) ── */
+/*
+  Usage:
+    showFeedback('success', '...')  → adds class form-feedback--success
+    showFeedback('error',   '...')  → adds class form-feedback--error
+  Hidden by default; JS sets display:flex to reveal it.
+*/
+.form-feedback {
+  display: none;               /* Hidden until JS shows it          */
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  border: 1.5px solid transparent;
+  animation: fade-slide-up 0.3s ease both;
+}
+
+.form-feedback i {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  margin-top: 2px;             /* Align icon with first line of text */
+}
+
+/* Success state — green tones matching the accent colour */
+.form-feedback--success {
+  background: rgba(57, 211, 83, 0.10);
+  border-color: rgba(57, 211, 83, 0.35);
+  color: #6ee886;
+}
+
+.form-feedback--success i {
+  color: var(--color-accent);
+}
+
+/* Error state — red tones */
+.form-feedback--error {
+  background: rgba(255, 77, 77, 0.10);
+  border-color: rgba(255, 77, 77, 0.35);
+  color: #ff8080;
+}
+
+.form-feedback--error i {
+  color: var(--color-error);
+}
+
+/* ── Responsive tweaks for the two new fields ── */
+@media (max-width: 480px) {
+  .form-group input[type="date"] {
+    font-size: 0.9rem;
+    padding: 12px 14px;
+  }
+}

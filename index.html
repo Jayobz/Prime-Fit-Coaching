@@ -521,6 +521,41 @@
               <span class="form-error" id="experienceError"></span>
             </div>
 
+            <!-- Preferred Consultation Date -->
+            <div class="form-group">
+              <label for="consultationDate">
+                <i class="fas fa-calendar-days"></i> Preferred Consultation Date
+              </label>
+              <input
+                type="date"
+                id="consultationDate"
+                name="consultationDate"
+              />
+              <span class="form-error" id="consultationDateError"></span>
+            </div>
+
+            <!-- Preferred Consultation Time -->
+            <div class="form-group">
+              <label for="consultationTime">
+                <i class="fas fa-clock"></i> Preferred Consultation Time
+              </label>
+              <select id="consultationTime" name="consultationTime">
+                <option value="">— Select a time —</option>
+                <option value="9:00 AM">9:00 AM</option>
+                <option value="10:00 AM">10:00 AM</option>
+                <option value="1:00 PM">1:00 PM</option>
+                <option value="3:00 PM">3:00 PM</option>
+                <option value="5:00 PM">5:00 PM</option>
+              </select>
+              <span class="form-error" id="consultationTimeError"></span>
+            </div>
+
+            <!-- ================================================
+                 SUBMIT FEEDBACK BANNER
+                 Shown by JavaScript — hidden by default
+            ================================================ -->
+            <div class="form-feedback" id="formFeedback" role="alert" aria-live="polite"></div>
+
             <!-- Submit -->
             <button type="submit" class="btn btn-primary btn-full btn-large" id="submitBtn">
               <i class="fas fa-bolt"></i>
@@ -670,6 +705,12 @@
     </a>
   </div>
 
+
+  <!-- ============================================================
+       SUPABASE JS CLIENT (CDN)
+       Load before script.js so window.supabase is available
+  ============================================================ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- JavaScript -->
   <script src="script.js"></script>

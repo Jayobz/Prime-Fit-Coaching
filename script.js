@@ -252,9 +252,20 @@ function initScrollAnimations() {
 const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-// Initialise the Supabase client using the CDN global (loaded before this file)
-// window.supabase is provided by @supabase/supabase-js v2 via CDN
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialise the Supabase client safely.
+// createClient() throws a synchronous TypeError if SUPABASE_URL is not a
+// valid URL (e.g. the placeholder string 'YOUR_SUPABASE_URL').
+// Wrapping in try/catch prevents that error from halting the entire script
+// and making every fade-in section invisible.
+let supabaseClient = null;
+try {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (initErr) {
+  console.warn(
+    '[PrimeFit] Supabase client not initialised — replace the placeholder credentials in script.js.',
+    initErr.message
+  );
+}
 
 
 /* ============================================================
@@ -457,6 +468,13 @@ function initLeadForm() {
 
     try {
       // ── 4. Insert into Supabase ────────────────────────────
+      // Guard: if credentials haven't been set yet, show a clear error
+      if (!supabaseClient) {
+        throw new Error(
+          'Supabase is not configured. Replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY in script.js.'
+        );
+      }
+
       // The anon key + RLS INSERT policy allows this.
       // SELECT is blocked by RLS so visitors cannot read other leads.
       const { error: supabaseError } = await supabaseClient

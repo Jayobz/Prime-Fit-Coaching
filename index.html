@@ -499,55 +499,18 @@
               <span class="form-error" id="fitnessGoalError"></span>
             </div>
 
-            <!-- Experience Level -->
+            <!-- Message / Additional Info -->
             <div class="form-group">
-              <label>
-                <i class="fas fa-chart-line"></i> Experience Level
+              <label for="message">
+                <i class="fas fa-comment-dots"></i> Tell Us About Your Goals
               </label>
-              <div class="radio-group">
-                <label class="radio-label">
-                  <input type="radio" name="experience" value="beginner" />
-                  <span class="radio-btn">Beginner</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="experience" value="intermediate" />
-                  <span class="radio-btn">Intermediate</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="experience" value="advanced" />
-                  <span class="radio-btn">Advanced</span>
-                </label>
-              </div>
-              <span class="form-error" id="experienceError"></span>
-            </div>
-
-            <!-- Preferred Consultation Date -->
-            <div class="form-group">
-              <label for="consultationDate">
-                <i class="fas fa-calendar-days"></i> Preferred Consultation Date
-              </label>
-              <input
-                type="date"
-                id="consultationDate"
-                name="consultationDate"
-              />
-              <span class="form-error" id="consultationDateError"></span>
-            </div>
-
-            <!-- Preferred Consultation Time -->
-            <div class="form-group">
-              <label for="consultationTime">
-                <i class="fas fa-clock"></i> Preferred Consultation Time
-              </label>
-              <select id="consultationTime" name="consultationTime">
-                <option value="">— Select a time —</option>
-                <option value="9:00 AM">9:00 AM</option>
-                <option value="10:00 AM">10:00 AM</option>
-                <option value="1:00 PM">1:00 PM</option>
-                <option value="3:00 PM">3:00 PM</option>
-                <option value="5:00 PM">5:00 PM</option>
-              </select>
-              <span class="form-error" id="consultationTimeError"></span>
+              <textarea
+                id="message"
+                name="message"
+                rows="3"
+                placeholder="e.g. I want to lose 15 lbs before summer and build a consistent workout habit..."
+              ></textarea>
+              <span class="form-error" id="messageError"></span>
             </div>
 
             <!-- ================================================

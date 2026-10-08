@@ -7,10 +7,30 @@
    02. Navigation (scroll behavior + mobile menu)
    03. Scroll Animations (Intersection Observer)
    04. Supabase Config & Client
-   05. Lead Capture Form (index.html) — Supabase integration
-   06. Thank You Page (thank-you.html)
-   07. Booking Form (thank-you.html)
+   05. Lead Capture Form (index.html) — saves to leads table
+   06. Thank You Page (thank-you.html) — loads lead data
+   07. Booking Form (thank-you.html) — saves to bookings table
    08. Init — Route to correct page handlers
+
+   SUPABASE SCHEMA:
+   ┌─────────────────────────────────────────────────────┐
+   │ TABLE: leads                                        │
+   │   id            uuid  PK  gen_random_uuid()         │
+   │   full_name     text                                │
+   │   email         text                                │
+   │   phone         text                                │
+   │   goal          text                                │
+   │   message       text                                │
+   │   created_at    timestamptz  default now()          │
+   ├─────────────────────────────────────────────────────┤
+   │ TABLE: bookings                                     │
+   │   id            uuid  PK  gen_random_uuid()         │
+   │   lead_id       uuid  FK → leads.id                 │
+   │   booking_date  date                                │
+   │   booking_time  time                                │
+   │   status        text  default 'pending'             │
+   │   created_at    timestamptz  default now()          │
+   └─────────────────────────────────────────────────────┘
 ============================================================ */
 
 'use strict';
@@ -19,118 +39,76 @@
    01. UTILITY HELPERS
 ============================================================ */
 
-/**
- * Shorthand querySelector
- * @param {string} selector
- * @param {Element} [scope=document]
- * @returns {Element|null}
- */
+/** Shorthand querySelector */
 const $ = (selector, scope = document) => scope.querySelector(selector);
 
-/**
- * Shorthand querySelectorAll
- * @param {string} selector
- * @param {Element} [scope=document]
- * @returns {NodeList}
- */
+/** Shorthand querySelectorAll */
 const $$ = (selector, scope = document) => scope.querySelectorAll(selector);
 
-/**
- * Validate an email string format
- * @param {string} email
- * @returns {boolean}
- */
+/** Validate email format */
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-/**
- * Validate a phone number — accepts common formats
- * @param {string} phone
- * @returns {boolean}
- */
+/** Validate phone — at least 7 digits, max 15 */
 function isValidPhone(phone) {
-  // Allow digits, spaces, dashes, parens, plus sign — at least 7 digits total
   const digits = phone.replace(/\D/g, '');
   return digits.length >= 7 && digits.length <= 15;
 }
 
-/**
- * Sanitize a string for display (prevent XSS in DOM insertions)
- * @param {string} str
- * @returns {string}
- */
+/** Sanitize string for safe innerHTML insertion */
 function sanitize(str) {
   const div = document.createElement('div');
   div.textContent = String(str);
   return div.innerHTML;
 }
 
-/**
- * Show a form error message and mark the field invalid
- * @param {HTMLElement} field - input/select element
- * @param {HTMLElement} errorEl - span to show message in
- * @param {string} message
- */
+/** Mark a field invalid and show its error message */
 function showError(field, errorEl, message) {
-  if (field) field.classList.add('invalid');
+  if (field)   field.classList.add('invalid');
   if (errorEl) errorEl.textContent = message;
 }
 
-/**
- * Clear error state from a field
- * @param {HTMLElement} field
- * @param {HTMLElement} errorEl
- */
+/** Clear invalid state and error message from a field */
 function clearError(field, errorEl) {
-  if (field) field.classList.remove('invalid');
+  if (field)   field.classList.remove('invalid');
   if (errorEl) errorEl.textContent = '';
 }
 
 /**
- * Format a date string (YYYY-MM-DD) → "Monday, January 20, 2025"
- * @param {string} dateStr
- * @returns {string}
+ * Format YYYY-MM-DD → "Monday, January 20, 2025"
+ * Parses as local date to avoid timezone-shift issues.
  */
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  // Parse as local date to avoid timezone shift
   const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString('en-US', {
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
     weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year:    'numeric',
+    month:   'long',
+    day:     'numeric',
   });
 }
 
-/**
- * Get today's date as YYYY-MM-DD string (for min date on date inputs)
- * @returns {string}
- */
+/** Today as YYYY-MM-DD (used to set min date on date inputs) */
 function todayString() {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const d = String(today.getDate()).padStart(2, '0');
+  const t = new Date();
+  const y = t.getFullYear();
+  const m = String(t.getMonth() + 1).padStart(2, '0');
+  const d = String(t.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
-/**
- * Map internal fitness goal values to human-readable labels
- * @param {string} value
- * @returns {string}
- */
+/** Human-readable label for a fitness goal value */
 function goalLabel(value) {
-  const labels = {
+  const map = {
     'lose-weight':    'lose weight',
     'build-muscle':   'build muscle',
     'improve-fitness':'improve your fitness',
     'get-healthier':  'get healthier',
     'other':          'reach your fitness goals',
   };
-  return labels[value] || 'reach your fitness goals';
+  return map[value] || 'reach your fitness goals';
 }
 
 
@@ -139,25 +117,20 @@ function goalLabel(value) {
 ============================================================ */
 
 function initNavigation() {
-  const navbar     = $('#navbar');
-  const hamburger  = $('#hamburger');
-  const navLinks   = $('#navLinks');
+  const navbar    = $('#navbar');
+  const hamburger = $('#hamburger');
+  const navLinks  = $('#navLinks');
 
   if (!navbar) return;
 
-  // --- Scroll: add/remove .scrolled class ---
+  // Scroll: add/remove .scrolled class for opaque background
   function handleNavScroll() {
-    if (window.scrollY > 40) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
-    }
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
   }
-
   window.addEventListener('scroll', handleNavScroll, { passive: true });
-  handleNavScroll(); // Run on load in case page is already scrolled
+  handleNavScroll();
 
-  // --- Mobile hamburger toggle ---
+  // Mobile hamburger toggle
   if (hamburger && navLinks) {
     hamburger.addEventListener('click', () => {
       const isOpen = navLinks.classList.toggle('open');
@@ -165,7 +138,6 @@ function initNavigation() {
       hamburger.setAttribute('aria-expanded', isOpen);
     });
 
-    // Close menu when a nav link is clicked
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         navLinks.classList.remove('open');
@@ -174,7 +146,6 @@ function initNavigation() {
       });
     });
 
-    // Close menu when clicking outside
     document.addEventListener('click', (e) => {
       if (!navbar.contains(e.target) && navLinks.classList.contains('open')) {
         navLinks.classList.remove('open');
@@ -184,20 +155,16 @@ function initNavigation() {
     });
   }
 
-  // --- Smooth scroll for anchor links ---
-  // (HTML has scroll-behavior: smooth but we handle offset for fixed navbar)
+  // Smooth scroll with fixed-navbar offset
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', (e) => {
-      const targetId = anchor.getAttribute('href');
-      if (targetId === '#') return;
-      const target = document.querySelector(targetId);
+      const id = anchor.getAttribute('href');
+      if (id === '#') return;
+      const target = document.querySelector(id);
       if (!target) return;
       e.preventDefault();
-
-      const navHeight = navbar.offsetHeight;
-      const targetTop = target.getBoundingClientRect().top + window.scrollY - navHeight - 16;
-
-      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+      const top = target.getBoundingClientRect().top + window.scrollY - navbar.offsetHeight - 16;
+      window.scrollTo({ top, behavior: 'smooth' });
     });
   });
 }
@@ -208,163 +175,140 @@ function initNavigation() {
 ============================================================ */
 
 function initScrollAnimations() {
-  const fadeElements = $$('.fade-in');
-  if (!fadeElements.length) return;
+  const els = $$('.fade-in');
+  if (!els.length) return;
 
-  // Use IntersectionObserver for performance
+  if (!('IntersectionObserver' in window)) {
+    // Fallback for older browsers — show everything immediately
+    els.forEach(el => el.classList.add('visible'));
+    return;
+  }
+
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
-          // Once visible, no need to keep observing
           observer.unobserve(entry.target);
         }
       });
     },
-    {
-      threshold: 0.12,       // Trigger when 12% of element is visible
-      rootMargin: '0px 0px -40px 0px', // Slight bottom offset
-    }
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
   );
 
-  fadeElements.forEach(el => observer.observe(el));
-
-  // Fallback: if IntersectionObserver not supported, show all
-  if (!('IntersectionObserver' in window)) {
-    fadeElements.forEach(el => el.classList.add('visible'));
-  }
+  els.forEach(el => observer.observe(el));
 }
 
 
 /* ============================================================
-   04. SUPABASE CONFIG
+   04. SUPABASE CONFIG & CLIENT
    ──────────────────────────────────────────────────────────
-   Replace the two placeholder strings below with your real
-   values from: Supabase Dashboard → Project Settings → API
+   Project URL : https://qhcuqyzhvuosuhtafzyu.supabase.co
+   Anon key    : find in Supabase Dashboard →
+                 Project Settings → API → anon / public
 
-   SUPABASE_URL  → "Project URL"
-   SUPABASE_ANON_KEY → "anon / public" key
+   PASTE YOUR ANON KEY BELOW.
+   The anon key is intentionally public — it is safe to
+   include in client-side code. It is protected by RLS.
 
-   NEVER use the service_role key here — anon key only.
+   NEVER paste the service_role key here.
+   NEVER paste the PostgreSQL password here.
 ============================================================ */
 
-const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL  = 'https://qhcuqyzhvuosuhtafzyu.supabase.co';
+const SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY'; // ← replace this
 
-// Initialise the Supabase client safely.
-// createClient() throws a synchronous TypeError if SUPABASE_URL is not a
-// valid URL (e.g. the placeholder string 'YOUR_SUPABASE_URL').
-// Wrapping in try/catch prevents that error from halting the entire script
-// and making every fade-in section invisible.
+// Initialise safely — createClient throws if URL is invalid/placeholder
 let supabaseClient = null;
 try {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} catch (initErr) {
-  console.warn(
-    '[PrimeFit] Supabase client not initialised — replace the placeholder credentials in script.js.',
-    initErr.message
-  );
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+  console.warn('[PrimeFit] Supabase client failed to initialise:', e.message);
 }
 
 
 /* ============================================================
-   05. LEAD CAPTURE FORM (index.html)
+   05. LEAD CAPTURE FORM  (index.html)
    ──────────────────────────────────────────────────────────
-   Supabase table expected: "leads"
-   Columns:
-     id                – auto-generated (uuid or serial, set by Supabase)
-     full_name         – text
-     email             – text
-     phone             – text
-     fitness_goal      – text
-     consultation_date – date  (YYYY-MM-DD)
-     consultation_time – text
-     created_at        – timestamptz (set by Supabase default: now())
+   Inserts into: leads
+   Columns used:
+     full_name  ← #fullName
+     email      ← #email
+     phone      ← #phone
+     goal       ← #fitnessGoal  (dropdown value)
+     message    ← #message      (textarea)
+
+   On success:
+     • Captures the returned lead.id
+     • Saves lead data + id to localStorage
+     • Redirects to thank-you.html after 1.4 s
+
+   On failure:
+     • Restores the submit button
+     • Shows inline error banner
+     • Does NOT clear the form
 ============================================================ */
 
 function initLeadForm() {
   const form = $('#leadForm');
   if (!form) return;
 
-  // ── Field references ──────────────────────────────────────
   const fields = {
-    fullName:         { input: $('#fullName'),         error: $('#fullNameError') },
-    email:            { input: $('#email'),             error: $('#emailError') },
-    phone:            { input: $('#phone'),             error: $('#phoneError') },
-    fitnessGoal:      { input: $('#fitnessGoal'),       error: $('#fitnessGoalError') },
-    experience:       { input: null,                    error: $('#experienceError') },
-    consultationDate: { input: $('#consultationDate'),  error: $('#consultationDateError') },
-    consultationTime: { input: $('#consultationTime'),  error: $('#consultationTimeError') },
+    fullName:    { input: $('#fullName'),    error: $('#fullNameError') },
+    email:       { input: $('#email'),       error: $('#emailError') },
+    phone:       { input: $('#phone'),       error: $('#phoneError') },
+    fitnessGoal: { input: $('#fitnessGoal'), error: $('#fitnessGoalError') },
+    message:     { input: $('#message'),     error: $('#messageError') },
   };
 
-  const submitBtn    = $('#submitBtn');
-  const feedbackEl   = $('#formFeedback');
+  const submitBtn      = $('#submitBtn');
+  const feedbackEl     = $('#formFeedback');
+  const origBtnHTML    = submitBtn ? submitBtn.innerHTML : '';
 
-  // Store original button label so we can restore it on error
-  const originalBtnHTML = submitBtn.innerHTML;
+  // ── Feedback banner helpers ───────────────────────────────
 
-  // ── Helpers: feedback banner ──────────────────────────────
-
-  /**
-   * Show an inline success or error message above the submit button.
-   * @param {'success'|'error'} type
-   * @param {string} message
-   */
-  function showFeedback(type, message) {
+  function showFeedback(type, text) {
     if (!feedbackEl) return;
     feedbackEl.className = `form-feedback form-feedback--${type}`;
     feedbackEl.innerHTML = type === 'success'
-      ? `<i class="fas fa-circle-check"></i> ${message}`
-      : `<i class="fas fa-triangle-exclamation"></i> ${message}`;
+      ? `<i class="fas fa-circle-check"></i> ${text}`
+      : `<i class="fas fa-triangle-exclamation"></i> ${text}`;
     feedbackEl.style.display = 'flex';
-
-    // Scroll feedback into view
-    const navbar = $('#navbar');
-    const offset = (navbar ? navbar.offsetHeight : 80) + 12;
-    const top = feedbackEl.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: 'smooth' });
+    // Scroll banner into view
+    const nav    = $('#navbar');
+    const offset = (nav ? nav.offsetHeight : 80) + 12;
+    window.scrollTo({
+      top: feedbackEl.getBoundingClientRect().top + window.scrollY - offset,
+      behavior: 'smooth',
+    });
   }
 
   function hideFeedback() {
     if (!feedbackEl) return;
     feedbackEl.style.display = 'none';
-    feedbackEl.textContent = '';
-    feedbackEl.className = 'form-feedback';
+    feedbackEl.textContent   = '';
+    feedbackEl.className     = 'form-feedback';
   }
 
-  // ── Set min date to today on the date picker ──────────────
-  if (fields.consultationDate.input) {
-    fields.consultationDate.input.min = todayString();
-  }
+  // ── Real-time: clear errors while typing ─────────────────
 
-  // ── Real-time validation: clear errors on input ───────────
   Object.values(fields).forEach(({ input, error }) => {
     if (!input) return;
     input.addEventListener('input',  () => { clearError(input, error); hideFeedback(); });
     input.addEventListener('change', () => { clearError(input, error); hideFeedback(); });
   });
 
-  // Radio group — clear error on any selection
-  $$('input[name="experience"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      clearError(null, fields.experience.error);
-      hideFeedback();
-    });
-  });
+  // ── Validation ────────────────────────────────────────────
 
-  // ── Full form validation ──────────────────────────────────
-  function validateForm() {
-    let valid = true;
+  function validateLeadForm() {
+    let ok = true;
 
-    // Full Name
+    // Full name
     const name = fields.fullName.input.value.trim();
-    if (!name) {
-      showError(fields.fullName.input, fields.fullName.error, 'Please enter your full name.');
-      valid = false;
-    } else if (name.length < 2) {
-      showError(fields.fullName.input, fields.fullName.error, 'Name must be at least 2 characters.');
-      valid = false;
+    if (!name || name.length < 2) {
+      showError(fields.fullName.input, fields.fullName.error,
+        name ? 'Name must be at least 2 characters.' : 'Please enter your full name.');
+      ok = false;
     } else {
       clearError(fields.fullName.input, fields.fullName.error);
     }
@@ -373,10 +317,10 @@ function initLeadForm() {
     const email = fields.email.input.value.trim();
     if (!email) {
       showError(fields.email.input, fields.email.error, 'Please enter your email address.');
-      valid = false;
+      ok = false;
     } else if (!isValidEmail(email)) {
       showError(fields.email.input, fields.email.error, 'Please enter a valid email address.');
-      valid = false;
+      ok = false;
     } else {
       clearError(fields.email.input, fields.email.error);
     }
@@ -385,365 +329,346 @@ function initLeadForm() {
     const phone = fields.phone.input.value.trim();
     if (!phone) {
       showError(fields.phone.input, fields.phone.error, 'Please enter your phone number.');
-      valid = false;
+      ok = false;
     } else if (!isValidPhone(phone)) {
       showError(fields.phone.input, fields.phone.error, 'Please enter a valid phone number.');
-      valid = false;
+      ok = false;
     } else {
       clearError(fields.phone.input, fields.phone.error);
     }
 
-    // Fitness Goal
+    // Fitness goal
     const goal = fields.fitnessGoal.input.value;
     if (!goal) {
-      showError(fields.fitnessGoal.input, fields.fitnessGoal.error, 'Please select your fitness goal.');
-      valid = false;
+      showError(fields.fitnessGoal.input, fields.fitnessGoal.error,
+        'Please select your fitness goal.');
+      ok = false;
     } else {
       clearError(fields.fitnessGoal.input, fields.fitnessGoal.error);
     }
 
-    // Experience Level (radio)
-    const experienceRadio = $('input[name="experience"]:checked');
-    if (!experienceRadio) {
-      showError(null, fields.experience.error, 'Please select your experience level.');
-      valid = false;
-    } else {
-      clearError(null, fields.experience.error);
-    }
+    // Message (optional but present in schema — no hard requirement)
+    clearError(fields.message.input, fields.message.error);
 
-    // Consultation Date
-    const cDate = fields.consultationDate.input.value;
-    if (!cDate) {
-      showError(fields.consultationDate.input, fields.consultationDate.error, 'Please select a preferred consultation date.');
-      valid = false;
-    } else {
-      clearError(fields.consultationDate.input, fields.consultationDate.error);
-    }
-
-    // Consultation Time
-    const cTime = fields.consultationTime.input.value;
-    if (!cTime) {
-      showError(fields.consultationTime.input, fields.consultationTime.error, 'Please select a preferred consultation time.');
-      valid = false;
-    } else {
-      clearError(fields.consultationTime.input, fields.consultationTime.error);
-    }
-
-    return valid;
+    return ok;
   }
 
-  // ── Form submit handler ───────────────────────────────────
+  // ── Submit handler ────────────────────────────────────────
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideFeedback();
 
-    // 1. Validate — stop here if anything is missing/invalid
-    if (!validateForm()) {
-      const firstError = form.querySelector('.invalid, .form-error:not(:empty)');
-      if (firstError) {
-        const navbar = $('#navbar');
-        const offset = (navbar ? navbar.offsetHeight : 80) + 20;
-        const top = firstError.getBoundingClientRect().top + window.scrollY - offset;
-        window.scrollTo({ top, behavior: 'smooth' });
+    // 1. Front-end validation
+    if (!validateLeadForm()) {
+      const firstBad = form.querySelector('.invalid, .form-error:not(:empty)');
+      if (firstBad) {
+        const nav    = $('#navbar');
+        const offset = (nav ? nav.offsetHeight : 80) + 20;
+        window.scrollTo({
+          top: firstBad.getBoundingClientRect().top + window.scrollY - offset,
+          behavior: 'smooth',
+        });
       }
       return;
     }
 
-    // 2. Collect form data — mapped to Supabase column names
-    const leadData = {
-      full_name:         fields.fullName.input.value.trim(),
-      email:             fields.email.input.value.trim(),
-      phone:             fields.phone.input.value.trim(),
-      fitness_goal:      fields.fitnessGoal.input.value,
-      // experience is not a column in the leads table —
-      // store it in localStorage for the thank-you page personalisation
-      consultation_date: fields.consultationDate.input.value,       // YYYY-MM-DD
-      consultation_time: fields.consultationTime.input.value,
-      // created_at is set automatically by Supabase (default: now())
+    // 2. Supabase guard
+    if (!supabaseClient) {
+      showFeedback('error',
+        'Database not configured yet. Please add your Supabase anon key to script.js.');
+      return;
+    }
+
+    // 3. Collect data — column names match the leads table exactly
+    const leadPayload = {
+      full_name: fields.fullName.input.value.trim(),
+      email:     fields.email.input.value.trim(),
+      phone:     fields.phone.input.value.trim(),
+      goal:      fields.fitnessGoal.input.value,
+      message:   fields.message.input ? fields.message.input.value.trim() : '',
+      // created_at is set automatically by Supabase
     };
 
-    // 3. Loading state — disable button to prevent duplicate submissions
-    submitBtn.disabled = true;
+    // 4. Loading state — prevents double-submit
+    submitBtn.disabled  = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
     try {
-      // ── 4. Insert into Supabase ────────────────────────────
-      // Guard: if credentials haven't been set yet, show a clear error
-      if (!supabaseClient) {
-        throw new Error(
-          'Supabase is not configured. Replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY in script.js.'
-        );
-      }
-
-      // The anon key + RLS INSERT policy allows this.
-      // SELECT is blocked by RLS so visitors cannot read other leads.
-      const { error: supabaseError } = await supabaseClient
+      // 5. Insert lead — use .select() to get back the generated id
+      const { data, error: insertErr } = await supabaseClient
         .from('leads')
-        .insert([leadData]);
+        .insert([leadPayload])
+        .select('id')   // returns the new row's id
+        .single();      // we inserted one row, expect one result
 
-      if (supabaseError) {
-        // Supabase returned an error (e.g. constraint violation, RLS denied)
-        throw supabaseError;
-      }
+      if (insertErr) throw insertErr;
+      if (!data || !data.id) throw new Error('No lead ID returned from database.');
 
-      // ── 5. Success ─────────────────────────────────────────
-      // Also save to localStorage so thank-you.html can personalise the greeting
+      const leadId = data.id; // ← uuid we will pass to the booking step
+
+      // 6. Persist to localStorage so thank-you.html can:
+      //    a) show a personalised greeting
+      //    b) use leadId when inserting the booking
       try {
         localStorage.setItem('primefit_lead', JSON.stringify({
-          fullName:         leadData.full_name,
-          email:            leadData.email,
-          phone:            leadData.phone,
-          fitnessGoal:      leadData.fitness_goal,
-          experience:       ($('input[name="experience"]:checked') || {}).value || '',
-          consultationDate: leadData.consultation_date,
-          consultationTime: leadData.consultation_time,
-          submittedAt:      new Date().toISOString(),
+          leadId,                                  // ← critical for booking FK
+          fullName:    leadPayload.full_name,
+          email:       leadPayload.email,
+          phone:       leadPayload.phone,
+          fitnessGoal: leadPayload.goal,
+          message:     leadPayload.message,
+          submittedAt: new Date().toISOString(),
         }));
       } catch (storageErr) {
-        // localStorage unavailable in some private-browsing contexts — not fatal
-        console.warn('localStorage unavailable:', storageErr);
+        console.warn('[PrimeFit] localStorage unavailable:', storageErr);
       }
 
-      // Show brief success message, then redirect to thank-you page
-      showFeedback('success', "You're In! Your free consultation request has been received.");
+      // 7. Brief success flash, then redirect
+      showFeedback('success',
+        "You're In! Your free consultation request has been received.");
 
-      // Short pause so the user sees the confirmation, then move on
       setTimeout(() => {
         window.location.href = 'thank-you.html';
       }, 1400);
 
-    } catch (error) {
-      // ── 6. Error handling ──────────────────────────────────
-      // Log the full technical error for debugging in DevTools
-      console.error('Lead submission error:', error);
-
-      // Restore the button so the user can try again
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalBtnHTML;
-
-      // Show a friendly, visible error message — do NOT clear the form
-      showFeedback('error', 'Something went wrong. Please check your information and try again.');
+    } catch (err) {
+      // 8. Real failure — restore button, show message, keep form data
+      console.error('[PrimeFit] Lead insert error:', err);
+      submitBtn.disabled  = false;
+      submitBtn.innerHTML = origBtnHTML;
+      showFeedback('error',
+        'Something went wrong. Please check your information and try again.');
     }
   });
 }
 
 
 /* ============================================================
-   06. THANK YOU PAGE — Load & Display Lead Data
+   06. THANK YOU PAGE  (thank-you.html)
+   ──────────────────────────────────────────────────────────
+   Reads primefit_lead from localStorage and:
+     • Shows personalised first-name greeting
+     • Shows the user's fitness goal
+     • Pre-fills the booking form name + email
+     • Makes the lead id available to the booking step
 ============================================================ */
 
 function initThankYouPage() {
-  // Only run on the thank-you page
   if (!document.body.classList.contains('thankyou-page')) return;
 
   const tyGreeting = $('#tyGreeting');
   const userNameEl = $('#userName');
   const userGoalEl = $('#userGoal');
 
-  // --- Load saved lead data from localStorage ---
   let leadData = null;
   try {
-    const stored = localStorage.getItem('primefit_lead');
-    if (stored) leadData = JSON.parse(stored);
+    const raw = localStorage.getItem('primefit_lead');
+    if (raw) leadData = JSON.parse(raw);
   } catch (err) {
-    console.warn('Could not read lead data:', err);
+    console.warn('[PrimeFit] Could not read lead data:', err);
   }
 
   if (leadData && tyGreeting) {
-    // Show personalized greeting
     const firstName = leadData.fullName
       ? leadData.fullName.trim().split(' ')[0]
       : null;
 
-    if (firstName && userNameEl) {
-      userNameEl.textContent = firstName;
-    }
-
-    if (leadData.fitnessGoal && userGoalEl) {
+    if (firstName && userNameEl) userNameEl.textContent = firstName;
+    if (leadData.fitnessGoal && userGoalEl)
       userGoalEl.textContent = goalLabel(leadData.fitnessGoal);
-    }
 
     if (firstName) {
-      tyGreeting.style.display = 'block';
+      tyGreeting.style.display   = 'block';
       tyGreeting.style.animation = 'fade-slide-up 0.5s ease 0.4s both';
     }
 
-    // Pre-fill booking form with known data (use raw strings for input values)
+    // Pre-fill booking form contact fields
     const bookingName  = $('#bookingName');
     const bookingEmail = $('#bookingEmail');
-
-    if (bookingName && leadData.fullName) {
-      bookingName.value = leadData.fullName.trim();
-    }
-    if (bookingEmail && leadData.email) {
-      bookingEmail.value = leadData.email.trim();
-    }
+    if (bookingName  && leadData.fullName) bookingName.value  = leadData.fullName.trim();
+    if (bookingEmail && leadData.email)    bookingEmail.value = leadData.email.trim();
   }
 
-  // --- Scroll CTA button ---
+  // Smooth-scroll CTA buttons that use href="#booking"
   $$('.scroll-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const target = document.querySelector(btn.getAttribute('href'));
-      if (target) {
-        const navbar = $('#navbar');
-        const offset = (navbar ? navbar.offsetHeight : 80) + 16;
-        const top = target.getBoundingClientRect().top + window.scrollY - offset;
-        window.scrollTo({ top, behavior: 'smooth' });
-      }
+      if (!target) return;
+      const nav    = $('#navbar');
+      const offset = (nav ? nav.offsetHeight : 80) + 16;
+      window.scrollTo({
+        top: target.getBoundingClientRect().top + window.scrollY - offset,
+        behavior: 'smooth',
+      });
     });
   });
 }
 
 
 /* ============================================================
-   07. BOOKING FORM (thank-you.html)
+   07. BOOKING FORM  (thank-you.html)
+   ──────────────────────────────────────────────────────────
+   Inserts into: bookings
+   Columns used:
+     lead_id      ← localStorage primefit_lead.leadId  (FK → leads.id)
+     booking_date ← #bookingDate  (date input, YYYY-MM-DD)
+     booking_time ← time-slot button selection          (HH:MM:SS)
+     status       ← hardcoded 'pending'
+
+   Two-step UI:
+     Step 1 — pick date + time slot → Continue
+     Step 2 — confirm name/email   → CONFIRM BOOKING → Supabase insert
 ============================================================ */
 
 function initBookingForm() {
-  const bookingForm  = $('#bookingForm');
+  const bookingForm = $('#bookingForm');
   if (!bookingForm) return;
 
-  // Step elements
+  // ── DOM refs ──────────────────────────────────────────────
   const step1 = $('#bookingStep1');
   const step2 = $('#bookingStep2');
 
-  // Step 1 fields
   const bookingDateInput  = $('#bookingDate');
-  const selectedTimeInput = $('#selectedTime');
+  const selectedTimeInput = $('#selectedTime');   // hidden input
   const timeSlotBtns      = $$('.time-slot');
 
-  // Step 1 errors
-  const bookingDateError   = $('#bookingDateError');
-  const selectedTimeError  = $('#selectedTimeError');
+  const bookingDateError  = $('#bookingDateError');
+  const selectedTimeError = $('#selectedTimeError');
 
-  // Step 2 fields
   const bookingNameInput  = $('#bookingName');
   const bookingEmailInput = $('#bookingEmail');
-
-  // Step 2 errors
   const bookingNameError  = $('#bookingNameError');
   const bookingEmailError = $('#bookingEmailError');
 
-  // Summary display
-  const summaryDate = $('#summaryDate');
-  const summaryTime = $('#summaryTime');
-
-  // Navigation buttons
+  const summaryDate    = $('#summaryDate');
+  const summaryTime    = $('#summaryTime');
   const nextStepBtn    = $('#nextStepBtn');
   const backStepBtn    = $('#backStepBtn');
+  const confirmBtn     = $('#confirmBookingBtn');
+  const origConfirmHTML = confirmBtn ? confirmBtn.innerHTML : '';
 
-  // Success overlay
   const successOverlay = $('#bookingSuccess');
   const successDetails = $('#successDetails');
   const successEmail   = $('#successEmail');
 
-  // --- Set minimum date to today ---
-  if (bookingDateInput) {
-    bookingDateInput.min = todayString();
-  }
+  // ── Setup ─────────────────────────────────────────────────
 
-  // --- Time slot selection ---
+  if (bookingDateInput) bookingDateInput.min = todayString();
+
+  // Time-slot button selection
   timeSlotBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      // Deselect all, select clicked
       timeSlotBtns.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      selectedTimeInput.value = btn.dataset.time;
+      // Store as HH:MM:SS (Supabase `time` type expects this format)
+      selectedTimeInput.value = convertTo24h(btn.dataset.time);
       clearError(null, selectedTimeError);
     });
   });
 
-  // --- Clear date error on change ---
-  if (bookingDateInput) {
-    bookingDateInput.addEventListener('change', () => clearError(bookingDateInput, bookingDateError));
+  if (bookingDateInput)
+    bookingDateInput.addEventListener('change',
+      () => clearError(bookingDateInput, bookingDateError));
+  if (bookingNameInput)
+    bookingNameInput.addEventListener('input',
+      () => clearError(bookingNameInput, bookingNameError));
+  if (bookingEmailInput)
+    bookingEmailInput.addEventListener('input',
+      () => clearError(bookingEmailInput, bookingEmailError));
+
+  // ── Helpers ───────────────────────────────────────────────
+
+  /**
+   * Convert "9:00 AM" / "1:00 PM" → "09:00:00" / "13:00:00"
+   * Supabase time columns require HH:MM:SS format.
+   */
+  function convertTo24h(timeStr) {
+    if (!timeStr) return '';
+    const [timePart, period] = timeStr.split(' ');
+    let [h, m] = timePart.split(':').map(Number);
+    if (period === 'PM' && h !== 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
   }
 
-  // --- Validate Step 1 ---
-  function validateStep1() {
-    let valid = true;
+  // ── Step 1 validation ─────────────────────────────────────
 
-    const dateVal = bookingDateInput ? bookingDateInput.value : '';
-    if (!dateVal) {
-      showError(bookingDateInput, bookingDateError, 'Please select a date for your consultation.');
-      valid = false;
+  function validateStep1() {
+    let ok = true;
+    if (!bookingDateInput || !bookingDateInput.value) {
+      showError(bookingDateInput, bookingDateError,
+        'Please select a date for your consultation.');
+      ok = false;
     } else {
       clearError(bookingDateInput, bookingDateError);
     }
-
-    const timeVal = selectedTimeInput ? selectedTimeInput.value : '';
-    if (!timeVal) {
+    if (!selectedTimeInput || !selectedTimeInput.value) {
       showError(null, selectedTimeError, 'Please select a time slot.');
-      valid = false;
+      ok = false;
     } else {
       clearError(null, selectedTimeError);
     }
-
-    return valid;
+    return ok;
   }
 
-  // --- Validate Step 2 ---
-  function validateStep2() {
-    let valid = true;
+  // ── Step 2 validation ─────────────────────────────────────
 
-    const nameVal = bookingNameInput ? bookingNameInput.value.trim() : '';
-    if (!nameVal) {
+  function validateStep2() {
+    let ok = true;
+    const name = bookingNameInput ? bookingNameInput.value.trim() : '';
+    if (!name) {
       showError(bookingNameInput, bookingNameError, 'Please enter your name.');
-      valid = false;
+      ok = false;
     } else {
       clearError(bookingNameInput, bookingNameError);
     }
-
-    const emailVal = bookingEmailInput ? bookingEmailInput.value.trim() : '';
-    if (!emailVal) {
+    const email = bookingEmailInput ? bookingEmailInput.value.trim() : '';
+    if (!email) {
       showError(bookingEmailInput, bookingEmailError, 'Please enter your email address.');
-      valid = false;
-    } else if (!isValidEmail(emailVal)) {
+      ok = false;
+    } else if (!isValidEmail(email)) {
       showError(bookingEmailInput, bookingEmailError, 'Please enter a valid email address.');
-      valid = false;
+      ok = false;
     } else {
       clearError(bookingEmailInput, bookingEmailError);
     }
-
-    return valid;
+    return ok;
   }
 
-  // --- Real-time validation on step 2 fields ---
-  if (bookingNameInput) {
-    bookingNameInput.addEventListener('input', () => clearError(bookingNameInput, bookingNameError));
-  }
-  if (bookingEmailInput) {
-    bookingEmailInput.addEventListener('input', () => clearError(bookingEmailInput, bookingEmailError));
-  }
+  // ── Next Step (Step 1 → Step 2) ───────────────────────────
 
-  // --- Next Step button (Step 1 → Step 2) ---
   if (nextStepBtn) {
     nextStepBtn.addEventListener('click', () => {
       if (!validateStep1()) return;
 
-      // Update summary display
-      const formattedDate = formatDate(bookingDateInput.value);
-      const selectedTime  = selectedTimeInput.value;
+      // Populate summary panel
+      if (summaryDate) summaryDate.textContent = formatDate(bookingDateInput.value);
+      if (summaryTime) summaryTime.textContent =
+        // Show the friendly label, not the 24-h value
+        timeSlotBtns[
+          [...timeSlotBtns].findIndex(b => b.classList.contains('selected'))
+        ]?.dataset.time ?? selectedTimeInput.value;
 
-      if (summaryDate) summaryDate.textContent = formattedDate;
-      if (summaryTime) summaryTime.textContent = selectedTime;
-
-      // Transition to step 2
       step1.classList.remove('active');
       step2.classList.add('active');
 
-      // Scroll form into view
-      const bookingFormWrap = $('#bookingFormWrap');
-      if (bookingFormWrap) {
-        const navbar = $('#navbar');
-        const offset = (navbar ? navbar.offsetHeight : 80) + 16;
-        const top = bookingFormWrap.getBoundingClientRect().top + window.scrollY - offset;
-        window.scrollTo({ top, behavior: 'smooth' });
+      // Scroll the form into view
+      const wrap = $('#bookingFormWrap');
+      if (wrap) {
+        const nav    = $('#navbar');
+        const offset = (nav ? nav.offsetHeight : 80) + 16;
+        window.scrollTo({
+          top: wrap.getBoundingClientRect().top + window.scrollY - offset,
+          behavior: 'smooth',
+        });
       }
     });
   }
 
-  // --- Back button (Step 2 → Step 1) ---
+  // ── Back (Step 2 → Step 1) ────────────────────────────────
+
   if (backStepBtn) {
     backStepBtn.addEventListener('click', () => {
       step2.classList.remove('active');
@@ -751,47 +676,93 @@ function initBookingForm() {
     });
   }
 
-  // --- Booking Form Submit (Step 2) ---
-  bookingForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+  // ── Booking submit ────────────────────────────────────────
 
+  bookingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
     if (!validateStep2()) return;
 
-    // Collect booking data
-    const bookingData = {
-      name:       bookingNameInput.value.trim(),
-      email:      bookingEmailInput.value.trim(),
-      date:       bookingDateInput.value,
-      dateFormatted: formatDate(bookingDateInput.value),
-      time:       selectedTimeInput.value,
-      bookedAt:   new Date().toISOString(),
+    // Retrieve lead_id saved during the lead form submission
+    let leadId = null;
+    try {
+      const raw = localStorage.getItem('primefit_lead');
+      if (raw) leadId = JSON.parse(raw).leadId || null;
+    } catch (_) { /* ignore */ }
+
+    if (!leadId) {
+      // No lead ID — cannot create a FK-linked booking.
+      // Show a graceful error instead of inserting an orphaned row.
+      console.error('[PrimeFit] No lead ID found in localStorage.');
+      alert('We could not find your consultation request. Please go back and resubmit the form.');
+      return;
+    }
+
+    if (!supabaseClient) {
+      alert('Database not configured. Please add your Supabase anon key.');
+      return;
+    }
+
+    // Loading state — prevents double-submit
+    if (confirmBtn) {
+      confirmBtn.disabled  = true;
+      confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';
+    }
+
+    // The friendly display label (e.g. "9:00 AM") for the confirmation UI
+    const selectedBtn     = [...timeSlotBtns].find(b => b.classList.contains('selected'));
+    const displayTime     = selectedBtn ? selectedBtn.dataset.time : selectedTimeInput.value;
+    const displayDate     = formatDate(bookingDateInput.value);
+
+    const bookingPayload = {
+      lead_id:      leadId,                       // FK → leads.id
+      booking_date: bookingDateInput.value,        // YYYY-MM-DD
+      booking_time: selectedTimeInput.value,       // HH:MM:SS (24-h)
+      status:       'pending',
+      // created_at is set automatically by Supabase
     };
 
-    // Save to localStorage (demo)
     try {
-      localStorage.setItem('primefit_booking', JSON.stringify(bookingData));
+      const { error: bookingErr } = await supabaseClient
+        .from('bookings')
+        .insert([bookingPayload]);
+
+      if (bookingErr) throw bookingErr;
+
+      // Persist booking details for the success overlay
+      try {
+        localStorage.setItem('primefit_booking', JSON.stringify({
+          leadId,
+          name:          bookingNameInput  ? bookingNameInput.value.trim()  : '',
+          email:         bookingEmailInput ? bookingEmailInput.value.trim() : '',
+          date:          bookingDateInput.value,
+          dateFormatted: displayDate,
+          time:          displayTime,
+          bookedAt:      new Date().toISOString(),
+        }));
+      } catch (_) { /* non-fatal */ }
+
+      showBookingSuccess({
+        name:          bookingNameInput  ? bookingNameInput.value.trim()  : '',
+        email:         bookingEmailInput ? bookingEmailInput.value.trim() : '',
+        dateFormatted: displayDate,
+        time:          displayTime,
+      });
+
     } catch (err) {
-      console.warn('localStorage unavailable:', err);
+      console.error('[PrimeFit] Booking insert error:', err);
+      if (confirmBtn) {
+        confirmBtn.disabled  = false;
+        confirmBtn.innerHTML = origConfirmHTML;
+      }
+      alert('Something went wrong while booking your consultation. Please try again.');
     }
-
-    // Show loading state on confirm button
-    const confirmBtn = $('#confirmBookingBtn');
-    if (confirmBtn) {
-      confirmBtn.disabled = true;
-      confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
-    }
-
-    // Short delay for realism, then show success
-    setTimeout(() => {
-      showBookingSuccess(bookingData);
-    }, 800);
   });
 
-  // --- Show booking success overlay ---
+  // ── Success overlay ───────────────────────────────────────
+
   function showBookingSuccess(data) {
     if (!successOverlay) return;
 
-    // Populate success details
     if (successDetails) {
       successDetails.innerHTML = `
         <div class="summary-row">
@@ -813,31 +784,22 @@ function initBookingForm() {
       `;
     }
 
-    if (successEmail) {
-      successEmail.textContent = data.email;
-    }
+    if (successEmail) successEmail.textContent = data.email;
 
-    // Show overlay
     successOverlay.classList.add('visible');
-    document.body.style.overflow = 'hidden'; // Prevent background scroll
-
-    // Scroll to top so overlay is visible from center
+    document.body.style.overflow = 'hidden';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // --- Close success overlay if clicking outside card ---
+  // Shake card if user clicks outside it (accidental dismiss prevention)
   if (successOverlay) {
     successOverlay.addEventListener('click', (e) => {
-      if (e.target === successOverlay) {
-        // Don't allow accidental dismiss — user should use the buttons
-        // but add a subtle shake to draw attention to the card
-        const card = successOverlay.querySelector('.booking-success-card');
-        if (card) {
-          card.style.animation = 'none';
-          card.offsetHeight; // Reflow
-          card.style.animation = 'shake 0.3s ease';
-        }
-      }
+      if (e.target !== successOverlay) return;
+      const card = successOverlay.querySelector('.booking-success-card');
+      if (!card) return;
+      card.style.animation = 'none';
+      void card.offsetHeight; // force reflow
+      card.style.animation = 'shake 0.3s ease';
     });
   }
 }
@@ -848,19 +810,14 @@ function initBookingForm() {
 ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // These run on ALL pages
+  // Runs on every page
   initNavigation();
   initScrollAnimations();
 
-  // Page-specific initializers
-  const isThankYouPage = document.body.classList.contains('thankyou-page');
-
-  if (isThankYouPage) {
-    // Thank You page: load lead data + booking form
+  if (document.body.classList.contains('thankyou-page')) {
     initThankYouPage();
     initBookingForm();
   } else {
-    // Landing page: lead capture form
     initLeadForm();
     initMobileStickyBehavior();
   }
@@ -868,52 +825,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 /* ============================================================
-   BONUS: Mobile Sticky CTA — hide when form is in view
+   MOBILE STICKY CTA
+   Hides the fixed bottom bar when the lead form is visible
 ============================================================ */
 
 function initMobileStickyBehavior() {
-  const stickyCta  = $('#mobileCta');
-  const leadForm   = $('#lead-capture');
-  if (!stickyCta || !leadForm) return;
+  const cta      = $('#mobileCta');
+  const formSect = $('#lead-capture');
+  if (!cta || !formSect) return;
 
-  // Hide sticky CTA when the lead capture section is visible
-  const observer = new IntersectionObserver(
+  cta.style.transition = 'opacity 0.3s ease';
+
+  new IntersectionObserver(
     (entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          stickyCta.style.opacity = '0';
-          stickyCta.style.pointerEvents = 'none';
-        } else {
-          stickyCta.style.opacity = '1';
-          stickyCta.style.pointerEvents = 'auto';
-        }
+        cta.style.opacity       = entry.isIntersecting ? '0' : '1';
+        cta.style.pointerEvents = entry.isIntersecting ? 'none' : 'auto';
       });
     },
     { threshold: 0.1 }
-  );
-
-  observer.observe(leadForm);
-
-  // Also add transition to sticky CTA
-  stickyCta.style.transition = 'opacity 0.3s ease';
+  ).observe(formSect);
 }
 
 
 /* ============================================================
-   EXTRA: Add a CSS shake keyframe dynamically
-   (Used for the success overlay click-outside behavior)
+   SHAKE KEYFRAME (injected dynamically for the booking overlay)
 ============================================================ */
 
-(function addShakeKeyframe() {
-  const style = document.createElement('style');
-  style.textContent = `
+(function injectShake() {
+  const s = document.createElement('style');
+  s.textContent = `
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%       { transform: translateX(-8px); }
-      40%       { transform: translateX(8px); }
-      60%       { transform: translateX(-5px); }
-      80%       { transform: translateX(5px); }
+      0%,100% { transform:translateX(0); }
+      20%     { transform:translateX(-8px); }
+      40%     { transform:translateX(8px); }
+      60%     { transform:translateX(-5px); }
+      80%     { transform:translateX(5px); }
     }
   `;
-  document.head.appendChild(style);
-})();
+  document.head.appendChild(s);
+}());

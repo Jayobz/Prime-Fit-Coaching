@@ -204,26 +204,57 @@ function initScrollAnimations() {
    04. SUPABASE CONFIG & CLIENT
    ──────────────────────────────────────────────────────────
    Project URL : https://qhcuqyzhvuosuhtafzyu.supabase.co
-   Anon key    : find in Supabase Dashboard →
-                 Project Settings → API → anon / public
 
-   PASTE YOUR ANON KEY BELOW.
-   The anon key is intentionally public — it is safe to
-   include in client-side code. It is protected by RLS.
+   ► PASTE YOUR ANON KEY on the SUPABASE_KEY line below.
+     Get it from:
+     Supabase Dashboard → Project Settings → API
+     → "anon public" key  (starts with eyJ...)
 
-   NEVER paste the service_role key here.
-   NEVER paste the PostgreSQL password here.
+   The anon key is safe for frontend use — it is protected
+   by Row Level Security (RLS).
+
+   NEVER use the service_role key or PostgreSQL password here.
 ============================================================ */
 
-const SUPABASE_URL  = 'https://qhcuqyzhvuosuhtafzyu.supabase.co';
-const SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY'; // ← replace this
+const SUPABASE_URL = 'https://qhcuqyzhvuosuhtafzyu.supabase.co';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // ← paste your anon key here
 
-// Initialise safely — createClient throws if URL is invalid/placeholder
+// Initialise safely.
+// createClient() throws a synchronous TypeError when given a non-URL string,
+// which would crash the whole script and make every section invisible.
+// Wrapping in try/catch keeps the page rendering even with a missing key.
 let supabaseClient = null;
 try {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (SUPABASE_KEY === 'YOUR_SUPABASE_ANON_KEY' || !SUPABASE_KEY) {
+    console.warn(
+      '[PrimeFit] Supabase anon key not set. ' +
+      'Open script.js and replace YOUR_SUPABASE_ANON_KEY with your real key.'
+    );
+  } else {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('[PrimeFit] Supabase client initialised ✓');
+  }
 } catch (e) {
-  console.warn('[PrimeFit] Supabase client failed to initialise:', e.message);
+  console.error('[PrimeFit] Supabase client failed to initialise:', e.message);
+}
+
+/**
+ * Generate a RFC 4122 UUID v4.
+ * Uses crypto.randomUUID() when available (all modern browsers),
+ * falls back to Math.random() for older environments.
+ * We generate the UUID client-side so we know the lead_id before
+ * inserting — this avoids needing a SELECT-back after INSERT,
+ * which simplifies RLS (only INSERT permission required, not SELECT).
+ */
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
 
 
@@ -373,15 +404,22 @@ function initLeadForm() {
       return;
     }
 
-    // 2. Supabase guard
+    // 2. Supabase guard — check BEFORE disabling the button
     if (!supabaseClient) {
       showFeedback('error',
-        'Database not configured yet. Please add your Supabase anon key to script.js.');
+        'Database not configured. Please add your Supabase anon key to script.js ' +
+        '(replace YOUR_SUPABASE_ANON_KEY).');
       return;
     }
 
-    // 3. Collect data — column names match the leads table exactly
+    // 3. Generate a UUID client-side so we know the lead_id immediately.
+    //    This avoids needing SELECT permission after INSERT —
+    //    only INSERT permission is required in RLS.
+    const leadId = generateUUID();
+
+    // 4. Collect data — column names match the leads table exactly
     const leadPayload = {
+      id:        leadId,                                           // explicit UUID
       full_name: fields.fullName.input.value.trim(),
       email:     fields.email.input.value.trim(),
       phone:     fields.phone.input.value.trim(),
@@ -390,29 +428,30 @@ function initLeadForm() {
       // created_at is set automatically by Supabase
     };
 
-    // 4. Loading state — prevents double-submit
-    submitBtn.disabled  = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    // 5. Loading state — prevents double-submit
+    if (submitBtn) {
+      submitBtn.disabled  = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    }
 
     try {
-      // 5. Insert lead — use .select() to get back the generated id
-      const { data, error: insertErr } = await supabaseClient
+      // 6. Insert lead (no .select() needed — we already have the id)
+      const { error: insertErr } = await supabaseClient
         .from('leads')
-        .insert([leadPayload])
-        .select('id')   // returns the new row's id
-        .single();      // we inserted one row, expect one result
+        .insert([leadPayload]);
 
-      if (insertErr) throw insertErr;
-      if (!data || !data.id) throw new Error('No lead ID returned from database.');
+      if (insertErr) {
+        // Surface the Supabase error code for easier debugging
+        console.error('[PrimeFit] Lead insert error:', insertErr);
+        throw insertErr;
+      }
 
-      const leadId = data.id; // ← uuid we will pass to the booking step
-
-      // 6. Persist to localStorage so thank-you.html can:
+      // 7. Persist to localStorage so thank-you.html can:
       //    a) show a personalised greeting
-      //    b) use leadId when inserting the booking
+      //    b) use leadId as the FK when inserting the booking
       try {
         localStorage.setItem('primefit_lead', JSON.stringify({
-          leadId,                                  // ← critical for booking FK
+          leadId,                        // ← critical FK for bookings table
           fullName:    leadPayload.full_name,
           email:       leadPayload.email,
           phone:       leadPayload.phone,
@@ -421,10 +460,11 @@ function initLeadForm() {
           submittedAt: new Date().toISOString(),
         }));
       } catch (storageErr) {
+        // Non-fatal — page still redirects; booking will show a fallback warning
         console.warn('[PrimeFit] localStorage unavailable:', storageErr);
       }
 
-      // 7. Brief success flash, then redirect
+      // 8. Brief success flash, then redirect to booking page
       showFeedback('success',
         "You're In! Your free consultation request has been received.");
 
@@ -433,12 +473,25 @@ function initLeadForm() {
       }, 1400);
 
     } catch (err) {
-      // 8. Real failure — restore button, show message, keep form data
-      console.error('[PrimeFit] Lead insert error:', err);
-      submitBtn.disabled  = false;
-      submitBtn.innerHTML = origBtnHTML;
-      showFeedback('error',
-        'Something went wrong. Please check your information and try again.');
+      // 9. Failure — restore button, keep form data, show specific message
+      console.error('[PrimeFit] Lead submission failed:', err);
+
+      if (submitBtn) {
+        submitBtn.disabled  = false;
+        submitBtn.innerHTML = origBtnHTML;
+      }
+
+      // Show a more helpful message depending on error type
+      let userMsg = 'Something went wrong. Please try again.';
+      if (err && err.code === '42501') {
+        userMsg = 'Submission blocked by database policy. Please contact support.';
+      } else if (err && err.message && err.message.includes('NetworkError')) {
+        userMsg = 'Network error. Please check your connection and try again.';
+      } else if (err && err.message && err.message.includes('Failed to fetch')) {
+        userMsg = 'Could not reach the server. Please check your connection and try again.';
+      }
+
+      showFeedback('error', userMsg);
     }
   });
 }
